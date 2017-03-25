@@ -7,3 +7,7 @@
   with_items:
      - git
      - mysql-client
+     - fail2ban
+
+- name: Setup fail2ban configuration
+  template: src=etc-fail2ban-jail-conf dest=/etc/fail2ban/jail.conf

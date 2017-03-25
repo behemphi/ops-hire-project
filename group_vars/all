@@ -1,6 +1,8 @@
 appserver_host: 192.168.50.4
 database_host: 192.168.50.5
-database_password: mysqlpass
-database_user: mysqluser
 database_name: electronics
+database_password: mysqlpass
 database_port: 1521
+database_user: mysqluser
+fail2ban_cidr: 192.168.50.1/24
+fail2ban_max_retry: 3
