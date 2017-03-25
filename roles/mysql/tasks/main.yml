@@ -11,12 +11,52 @@
 - name: Configure private bind address for database server
   lineinfile: dest=/etc/mysql/my.cnf regexp='^bind-address' line='bind-address=192.168.50.5'
 
+- name: Configure MySQL to listen on port 1521
+  lineinfile: dest=/etc/mysql/my.cnf regexp='^port' line="port={{ database_port }}"
+
 - name: Restart MySQL
   service: name=mysql state=restarted
+
+#
+# Deal with eliminating the root user
+#
+
+# Check to see if this is the first run
+- name: Create a Super User to Replace root 
+  stat: 
+    path: /etc/ansible/semaphore/remove_mysql_root_user
+  register: root_user_deleted
+
+- name: Create custom mysql superuser to replace root_user_deleted
+  command: mysql --user=root --port={{ database_port }} --execute="{{ item }}"
+  with_items:
+    - "GRANT ALL PRIVILEGES ON *.* TO 'supercontrast'@'localhost' IDENTIFIED BY 'supersecure' WITH GRANT OPTION;"
+  when: root_user_deleted.stat.exists == False
+
+- name: Remove MySQL root users
+  command: mysql --user=supercontrast --password=supersecure --port={{ database_port }} --execute="{{ item }}"
+  with_items:
+    - "DROP USER 'root'@'localhost';"
+    - "DROP USER 'root'@'database';"
+    - "DROP USER 'root'@'127.0.0.1';"
+    - "DROP USER 'root'@'::1';"
+    - "DROP USER 'debian-sys-maint'@'localhost';"
+    - "FLUSH PRIVILEGES;"
+  when: root_user_deleted.stat.exists == False
+
+# If the semaphore does not exists, then it should be created so commands are
+# not run as "root" and error.
+- name: Set msyql superuser semaphore
+  command: mkdir --parents /etc/ansible/semaphore && touch /etc/ansible/semaphore/remove_mysql_root_user
+  when: root_user_deleted.stat.exists == False
+
+#
+# End root user dealings
+#
  
 - name: Create database user
-  command: mysql -u root -e "{{ item }}"
+  command: mysql --user=supercontrast --password=supersecure --port={{ database_port }} --execute="{{ item }}"
   with_items:
-     - "CREATE USER '{{ database_user}}'@'192.168.50.4' IDENTIFIED BY '{{ database_password }}';"
-     - "GRANT ALL PRIVILEGES ON *.* TO '{{ database_user }}'@'192.168.50.4';" 
+    - "GRANT ALL PRIVILEGES ON {{ database_name }}.* TO '{{ database_user }}'@'{{ appserver_host }}' IDENTIFIED BY '{{ database_password }}';" 
+    - "FLUSH PRIVILEGES;"
 
