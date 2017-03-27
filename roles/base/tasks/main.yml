@@ -3,11 +3,36 @@
 
 - name: Install base packages
   apt: name={{ item }} update_cache=yes
-  sudo: true
+  become_method: sudo
   with_items:
+     - fail2ban
      - git
      - mysql-client
-     - fail2ban
+     - ufw
 
+#
+# Fail2Ban for each host
+#
 - name: Setup fail2ban configuration
   template: src=etc-fail2ban-jail-conf dest=/etc/fail2ban/jail.conf
+
+
+#
+# UFW set up for each host
+#
+
+# Allow SSH connections only from the workstation and other guests presumably
+# using the same address pattern.
+- name: Enable uncomplicated firewall (UFW) and keep from dropping connection
+  ufw:
+    rule: allow
+    port: 22
+    src: '{{ item }}'
+  with_items:
+    - 10.0.0.0/16
+    - 192.168.50.0/24
+
+- name: Set UFW default state
+  ufw: 
+    state: enabled
+    policy: reject 

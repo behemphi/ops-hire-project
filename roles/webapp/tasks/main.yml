@@ -22,3 +22,15 @@
 
 - name: Setup dbconfig
   template: src=admin-auth.php.j2 dest=/var/www/html/php/admin-auth.php
+
+#
+# Webapp specific UFW Settings
+#
+- name: allow connections from the world only on 80 and 443
+  ufw: 
+    rule: allow
+    port: '{{ item }}'
+    proto: tcp
+  with_items:
+    - 80
+    - 443

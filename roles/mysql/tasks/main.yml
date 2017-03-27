@@ -3,7 +3,7 @@
 
 - name: Install MySQL server
   apt: name={{ item }} update_cache=yes cache_valid_time=3600 state=present
-  sudo: yes
+  become_method: sudo
   with_items:
     - python-mysqldb
     - mysql-server
@@ -53,10 +53,26 @@
 #
 # End root user dealings
 #
- 
+
+# Grant privilage is idempotent so we can run this over and over to our hearts
+# desire. This is helpful if we would like to do credential rotation.
 - name: Create database user
   command: mysql --user=supercontrast --password=supersecure --port={{ database_port }} --execute="{{ item }}"
   with_items:
     - "GRANT ALL PRIVILEGES ON {{ database_name }}.* TO '{{ database_user }}'@'{{ appserver_host }}' IDENTIFIED BY '{{ database_password }}';" 
     - "FLUSH PRIVILEGES;"
 
+#
+# Database specific UFW Settings
+#
+# All tcp traffic from the workstation (for convenience) and from other 
+# hosts on the workstation (assume they will follow similar address scheme)
+- name: allow connections from app server and workstation
+  ufw: 
+    port: 1521
+    proto: tcp
+    rule: allow
+    src: '{{ item }}'
+  with_items:
+    - 10.0.0.0/16
+    - 192.168.50.0/24
