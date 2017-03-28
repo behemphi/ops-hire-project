@@ -9,11 +9,11 @@
   roles:
     - { role: mysql, tags: ['mysql'] }
 
+# Note you will need to galaxy install nginx and php-fpm roles for this 
+# playbook to work
 - hosts: appserver
   become: True
   roles:
-    - { role: apache, tags: ['apache'] }
-    - { role: webapp, tags: ['webapp'] }
-
-
-
+    - { role: geerlingguy.nginx, tags: ['nginx','appserver'] }
+    - { role: nbz4live.php-fpm, tags: ['php-fpm','appserver']}
+    - { role: webapp, tags: ['webapp','appserver'] }
