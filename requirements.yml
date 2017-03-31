@@ -1,0 +1,7 @@
+# Install Ansible Galaxy Commands locally
+
+# Very popular nginx role with a nice supporting blog
+- src: https://github.com/geerlingguy/ansible-role-nginx
+
+# Top starred PHP-FPM role
+- src: https://github.com/NBZ4live/ansible-php-fpm
